@@ -45,9 +45,21 @@ import { useEffect, useState } from "react";
       router.push(`/cars/${id}`);
     };
 
+    const deleteById = async(id: number) => {
+        try {
+               let apiUrl = HostUrl + "company"; // Xác định URL API
+               const result = await HttpUtils.delete<Company>(apiUrl, id.toString());
+               fetchData();
+               localStorage.setItem("IDDelete",id.toString());
+           } catch (error) {
+               console.error("Error calling API:", error);
+           }
+    };
+
     // chạy 1 lần môi khi load trang và sau khi load xong trang tĩnh trên client
     useEffect(() => {
       fetchData();
+      alert("vừa có bản cập nhật với id: " + localStorage.getItem("IDSua"));
     }, []);
 
     // chạy 1 lần mỗi khi Companys Thay đổi
@@ -93,6 +105,13 @@ import { useEffect, useState } from "react";
                       className="text-blue-500 hover:text-blue-700"
                     >
                       Xem chi tiết
+                    </button>
+
+                    <button
+                      onClick={() => deleteById(company.id)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      - XÓA
                     </button>
                 </td>
               </tr>

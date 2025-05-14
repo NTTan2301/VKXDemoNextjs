@@ -19,26 +19,31 @@ export default function DetailCompanyPage() {
         phone: ""
     });
 
+    const [originalData, setOriginalData] = useState<CompanyDetailDto | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+
     const router = useRouter();
 
     let HostUrl = process.env.NODE_ENV === 'development' 
                    ?  process.env.NEXT_PUBLIC_URL_DEV as string 
                    : process.env.NEXT_PUBLIC_URL_PRODUCTION as string;
 
-    let apiUrl = HostUrl + "company"; // Xác định URL API
+    
 
     // theo dõi sự thay đổi của text. cập nhật vào state
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    // Sự kiện lưu tạo mới dữ liệu
+    // cập nhật dữ liệu
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await HttpUtils.create<Company>(apiUrl, formData);
+            let apiUrl = HostUrl + "company/" + id; // Xác định URL API
+            const response = await HttpUtils.update<Company>(apiUrl, formData);
             if (response) {
-                router.push("/cars"); // điều hướng sau khi tạo thành công
+                fetch_getById();
+                localStorage.setItem("IDSua",id);
             } else {
                 console.error("Tạo thất bại");
             }
@@ -55,6 +60,7 @@ export default function DetailCompanyPage() {
         }
 
         try {
+            let apiUrl = HostUrl + "company"; // Xác định URL API
             const result = await HttpUtils.getById<Company>(apiUrl, id);
             debugger
             if (result) {
@@ -123,7 +129,7 @@ export default function DetailCompanyPage() {
                 />
             </div>
             <div>
-                <button type="submit">Tạo mới</button>
+                <button type="submit">Sửa lại</button>
             </div>
         </form>
     );
