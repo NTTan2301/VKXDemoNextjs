@@ -1,16 +1,20 @@
-"use client"; 
 
+"use client"; 
 import Company from "@/src/entities/Company";
 import { useRouter } from 'next/navigation';
 import HttpUtils from "@/src/Utils/HttpUtils";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { ResponseErrorAPI } from "@/src/Interface/ResponseErrorAPI";
 
   
 
   export default function CarListPage() {
+    const { theme, toggleTheme } = useTheme();
     const [Companys, setCompany] = useState<Company[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const router = useRouter();
+    const [error, setError] = useState<ResponseErrorAPI | null>(null);
 
     let HostUrl = process.env.NODE_ENV === 'development' 
                    ?  process.env.NEXT_PUBLIC_URL_DEV as string 
@@ -31,7 +35,9 @@ import { useEffect, useState } from "react";
           setCompany(result.items as Company[]);
         }
       } catch (error) {
-        console.error("Error calling API:", error);
+        debugger
+         setError(error as ResponseErrorAPI); // Lưu lỗi vào state
+        // console.error("Error calling API:", error);
       }
     }
 
@@ -59,19 +65,36 @@ import { useEffect, useState } from "react";
     // chạy 1 lần môi khi load trang và sau khi load xong trang tĩnh trên client
     useEffect(() => {
       fetchData();
-      alert("vừa có bản cập nhật với id: " + localStorage.getItem("IDSua"));
+      //alert("vừa có bản cập nhật với id: " + localStorage.getItem("IDSua"));
     }, []);
 
     // chạy 1 lần mỗi khi Companys Thay đổi
     useEffect(() => {
       console.log("kết quả trả về: ", Companys);
     }, [Companys]);
-    
+
+    if (error) {
+    return (
+      <div className="p-6 bg-red-100 text-red-800 rounded">
+        <h2>❌ Lỗi tải dữ liệu</h2>
+        <p>{error.message}</p>
+        <p>{error.statusCode}</p>
+        <button onClick={() => {
+          setError(null);
+          fetchData();
+        }}>
+          Thử lại
+        </button>
+      </div>
+    );
+    }
     
 
     return (
       <main className="p-6">
         <h1 className="text-2xl font-bold mb-4">Danh sách đơn vị</h1>
+         <p>Giao diện hiện tại: {theme}</p>
+          <button onClick={toggleTheme}>Chuyển đổi giao diện</button>
 
         <button
           onClick={handleCreateNew}

@@ -6,9 +6,10 @@ import CompanyCreateDto from "@/src/DTOParams/Company/CompanyCreateDto";
 import HttpUtils from "@/src/Utils/HttpUtils";
 import Company from "@/src/entities/Company";
 import CompanyDetailDto from "@/src/DTOParams/Company/CompanyDetailDto";
+import { useTheme } from "@/src/contexts/ThemeContext";
 
 export default function DetailCompanyPage() {
-
+    const { theme, toggleTheme } = useTheme(); 
     const params = useParams(); // Lấy tất cả tham số route
     const id = params?.id as string;   // Chắc chắn là string từ params
 
@@ -92,6 +93,10 @@ export default function DetailCompanyPage() {
 
     return (
         <form onSubmit={handleSubmit}>
+            <div>
+                <p>Giao diện hiện tại: {theme}</p>
+                <button onClick={toggleTheme}>Chuyển đổi giao diện</button>
+            </div>
             <div>
                 <input 
                     name="name" 

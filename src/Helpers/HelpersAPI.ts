@@ -14,6 +14,7 @@ export function CreateHeaders(includeToken: boolean = true): Record<string, stri
 }
 
 export async function handleApiError(response: Response): Promise<void> {
+  
   if (response.ok) return;
 
   let apiMessage = "Lỗi không xác định";
@@ -26,8 +27,10 @@ export async function handleApiError(response: Response): Promise<void> {
 
   
   let customMessage = "";
-
+  
   switch (response.status) {
+    // case 200: 
+    //   customMessage = "Hợp lệ.";
     case 400:
       customMessage = "Yêu cầu không hợp lệ. Vui lòng kiểm tra dữ liệu.";
       break;
@@ -35,13 +38,14 @@ export async function handleApiError(response: Response): Promise<void> {
       customMessage = "Chưa đăng nhập hoặc token đã hết hạn.";
       break;
     case 403:
-      customMessage = "Bạn không có quyền truy cập.";
+      customMessage = "Bạn không có quyền truy cập."; //
       break;
     case 404:
       customMessage = "Không tìm thấy tài nguyên.";
       break;
     case 500:
       customMessage = "Lỗi máy chủ. Vui lòng thử lại sau.";
+      break;
     case 504:
       customMessage = "Yêu cầu quá thời gian xử lý(timeout).";
       break;
@@ -49,7 +53,7 @@ export async function handleApiError(response: Response): Promise<void> {
       customMessage = `Lỗi không xác định (status ${response.status})`;
   }
 
-  var rs = new ResponseErrorAPI();
+  var rs = new ResponseErrorAPI(); // extend error
   rs.statusCode = response.status,
   rs.apiErrorMessage = apiMessage,
   rs.message = customMessage

@@ -1,13 +1,15 @@
 import company from "@/src/Utils/HttpUtils";
 import { PagedResponse } from "@/src/Interface/IPagedResponse"
-import { CreateHeaders, handleApiError } from "../Helpers/Headers";
+import { CreateHeaders, handleApiError } from "../Helpers/HelpersAPI";
 import { ResponseErrorAPI } from "../Interface/ResponseErrorAPI";
+import { EnumErrorCode } from "../Enum/ErrorEnum";
+import { mapErrorToResponseError } from "../Helpers/mapErrorToResponseError";
 
 export default class HttpUtils {
     public static async get<T>(apiUrl: string, actionCode: string, bodyContent: string,
         includeToken: boolean = true, closeError: boolean = true) {
 
-        return HttpUtils.fetch_api<T>(apiUrl);
+        return HttpUtils.Getall<T>(apiUrl);
     }
 
     public static async getById<T>(apiUrl: string, id: string) {
@@ -29,15 +31,52 @@ export default class HttpUtils {
 
         return HttpUtils.fetch_delete<T>(apiUrl, id);
     }
-
-
-    private static async fetch_api<T>(apiUrl: string,) 
+    //get sử dụng post.
+    //sử dụng builder hoắc factory.
+    public static async fetchApi<T>(apiUrl: string, method: string, data: any, includeToken: boolean = true, filterHeader: any )
     {
-        const token = "your_token_here";
-        const headers = {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // hoặc `Token ${token}` tùy theo backend
-        };
+        return HttpUtils.fetch_Api<T>(apiUrl, method, data, includeToken,filterHeader);
+    }
+
+    
+    private static async fetch_Api<T>(apiUrl: string,method: string,data: any,includeToken: boolean,filterHeader: any): Promise<T> 
+    {
+      const headers = CreateHeaders(includeToken);
+
+      const apiUrlWithQuery = filterHeader? `${apiUrl}?${new URLSearchParams(filterHeader).toString()}`: apiUrl;
+
+      try {
+      const options: RequestInit = {
+        method,
+        headers,
+      };
+
+        if (["POST", "PUT", "PATCH"].includes(method.toUpperCase()) && data) {
+          options.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(apiUrlWithQuery, options);
+
+        handleApiError(response);
+
+        const contentType = response.headers.get("Content-Type");
+
+        if (contentType?.includes("application/json")) {
+          const responseData = (await response.json()) as T;
+          return responseData;
+        } else {
+          console.error("Expected JSON, but received something else.");
+          throw new Error("Expected JSON, but received something else.");
+        }
+      } catch (error) {
+        throw mapErrorToResponseError(error);
+      }
+    } 
+
+    
+    private static async Getall<T>(apiUrl: string) 
+    {
+        const headers = CreateHeaders(true);
         const dto = {
             pageNumber: 1,
             pageSize: 10,
@@ -47,21 +86,19 @@ export default class HttpUtils {
         const apiUrlWithQuery = `${apiUrl}?${query}`;
         
         try{
+            debugger
             let response = await fetch(apiUrlWithQuery, {
                 method: "GET",
                 headers: headers,
             })
 
-            if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`);
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            handleApiError(response);
     
             const contentType = response.headers.get("Content-Type");
             
     
             if (contentType && contentType.includes("application/json")) {
-                const responseData = await response.json() as PagedResponse<T>;
+                const responseData = await response.json() as PagedResponse<T>; // reponse trả về không cố định
                 return responseData;
             } else {
                 console.error("Expected JSON, but received something else.");
@@ -69,9 +106,8 @@ export default class HttpUtils {
             }
         }
         catch (error){
-            console.error("Error fetching data:", error);
+            throw mapErrorToResponseError(error);
         }
-       
     }
 
     private static async fetch_apiById<T>(apiUrl: string, id: string) 
@@ -107,7 +143,7 @@ export default class HttpUtils {
             }
         }
         catch (error){
-            console.error("Error fetching data:", error);
+            throw mapErrorToResponseError(error);
         }
        
     }
@@ -146,7 +182,7 @@ export default class HttpUtils {
             throw new Error("Expected JSON, but received something else.");
           }
         } catch (error) {
-          console.error("Error creating data:", error);
+           throw mapErrorToResponseError(error);
         }
     }
 
@@ -167,11 +203,6 @@ export default class HttpUtils {
 
           await handleApiError(response);
       
-          if (!response.ok) {
-            console.error(`HTTP error! status: ${response.status}`);
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-      
           const contentType = response.headers.get("Content-Type");
       
           if (contentType && contentType.includes("application/json")) {
@@ -182,7 +213,7 @@ export default class HttpUtils {
             throw new Error("Expected JSON, but received something else.");
           }
         } catch (error) {
-          console.error("Error creating data:", error);
+           throw mapErrorToResponseError(error);
         }
     }
 
@@ -205,6 +236,8 @@ export default class HttpUtils {
                 headers: headers,
             })
 
+            await handleApiError(response);
+            
             if (!response.ok) {
                 console.error(`HTTP error! status: ${response.status}`);
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -221,8 +254,11 @@ export default class HttpUtils {
             }
         }
         catch (error){
-            console.error("Error fetching data:", error);
+            throw mapErrorToResponseError(error);
         }
        
     }
+
+
+
 }
